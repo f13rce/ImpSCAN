@@ -1,0 +1,47 @@
+Socket creation:
+
+Strat:
+	Check for Asssign, where:
+		Call = Socket, where Child or Child of children:
+			Attribute = "AF_INET"
+
+Raw log:
+s 		= 		socket 		.socket 	(AF_INET,	SOCK_STREAM)
+Name	Assign	Call		attr		Attribute	Attribute
+
+  Assign(targets=[<_ast.Name object at 0x7fb03dbfcc18>], value=Call(func=Attribute(value=Name(id='socket', ctx=Load()), attr='socket', ctx=Load()), args=[<_ast.Attribute object at 0x7fb03dbfccf8>, <_ast.Attribute object at 0x7fb03dbfcd68>], keywords=[]))
+    Name(id='s', ctx=Store())
+      Store()
+    Call(func=Attribute(value=Name(id='socket', ctx=Load()), attr='socket', ctx=Load()), args=[<_ast.Attribute object at 0x7fb03dbfccf8>, <_ast.Attribute object at 0x7fb03dbfcd68>], keywords=[])
+      Attribute(value=Name(id='socket', ctx=Load()), attr='socket', ctx=Load())
+        Name(id='socket', ctx=Load())
+          Load()
+        Load()
+	Attribute(value=Name(id='socket', ctx=Load()), attr='AF_INET', ctx=Load())
+        Name(id='socket', ctx=Load())
+          Load()
+        Load()
+      Attribute(value=Name(id='socket', ctx=Load()), attr='SOCK_STREAM', ctx=Load())
+        Name(id='socket', ctx=Load())
+          Load()
+        Load()
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Connect:
+
+s 		.connect( 	( 		  ip, 	  port )	)
+Name	Call	    	Tuple	  Name	  Name
+
+Expr(value=Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load()), args=[<_ast.Tuple object at 0x7fb03dbfa0b8>], keywords=[]))
+        Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load()), args=[<_ast.Tuple object at 0x7fb03dbfa0b8>], keywords=[])
+          Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load())
+            Name(id='s', ctx=Load())
+              Load()
+            Load()
+          Tuple(elts=[<_ast.Name object at 0x7fb03dbfa0f0>, <_ast.Name object at 0x7fb03dbfa128>], ctx=Load())
+            Name(id='ip', ctx=Load())
+              Load()
+            Name(id='port', ctx=Load())
+              Load()
+            Load()
