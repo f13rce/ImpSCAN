@@ -29,14 +29,14 @@ def HandleNode(aNode, aNodePath):
 				#attr=function, e.g.: 
 				if (field[0] == "func"):
 					for keyword in functionKeywords:
-						if ("attr='socket'" in field[1]):
+						if ("attr='{}'".format(keyword) in field[1]):
 							print("##########################################################################")
 							print("Found call: {}\t{}".format(keyword, repr(field)))
-
+	
 							i = 0
 							for path in aNodePath:
 								i += 1
-								print("\t{}: {}".format(i, PrintNode(path)))
+								print("\t{}:\t{}".format(i, PrintNode(path)))
 							print("\n")
 	#for field, value in ast.iter_fields(aNode):
 	#	print("{}, {}".format(field, value))
