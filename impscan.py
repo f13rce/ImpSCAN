@@ -34,13 +34,17 @@ def HandleNode(aNode, aNodePath):
 							print("Found call: {}\t{}".format(keyword, repr(field)))
 
 							# Find function it was called from
+							foundFunc = False
 							for path in reversed(aNodePath):
 								pathName = PrintNode(path)
 								if ("FunctionDef" in pathName[:len("FunctionDef")]):
 									#print(pathName)
 									funcName = pathName.split("'")[1]
 									print("It's coming from function named {}".format(funcName))
+									foundFunc = True
 									break
+							if not foundFunc:
+								print("This call is not called from inside a function")
 							#
 							#i = 0
 							#for path in aNodePath:
