@@ -73,9 +73,67 @@ def HandleNode(aNode, aNodePath):
 										print("\t{}.{} is using a variable named {}".format(socketVarName, keyword, varName))
 										variableNames.append(varName)
 
-							#for (varName in variableNames):
-								
-							#
+							for varName in variableNames:
+								assignMethods = []
+
+								for path in aNodePath:
+									nodeText = PrintNode(path)
+									subNodes = []
+									if ("Assign(" in nodeText):
+										
+										# Parse child nodes
+										for field, value in ast.iter_fields(path):
+											if isinstance(value, list):
+												for item in value:
+													if isinstance(item, ast.AST):
+														#print("\tAdding subnode: {}".format(PrintNode(item)))
+														subNodes.append(PrintNode(item))
+											elif isinstance(value, ast.AST):
+												#print("\tAdding subnode: {}".format(PrintNode(value)))
+												subNodes.append(PrintNode(value))
+
+										# Does it have the keyword we're looking for?
+										hasKeyword = False;
+										for subNode in subNodes:
+											if varName in subNode:
+												hasKeyword = True
+												break
+
+										# Check what assigns this variable
+										if (hasKeyword):
+											searchComponents = ["id", "attr"]
+											for subNode in subNodes:
+												searchString = "Call("
+												if (searchString in subNode[:len(searchString)]):
+													#print("\tAnalyzing call node: {}".format(subNode))
+													idString = ""
+													for component in searchComponents:
+														try:
+															cutText = subNode
+															while True:
+																index = cutText.index("{}=".format(component))
+																cutText = cutText[index:]
+																foundName = cutText.split("'")[1]
+
+																if (component == searchComponents[0]):
+																	 idString = foundName
+																else:
+																	if (idString == ""):
+																		assignMethods.append(foundName)
+																	else:
+																		assignMethods.append("{}.{}".format(idString, foundName))
+
+																#print("\tCall {}: {}".format(component, foundName))
+																cutText = cutText[(cutText.index(foundName) + len(foundName)):]
+														except Exception as ex:
+															pass
+
+								# Print results
+								if assignMethods:
+									print("\tAssignment order of {}:".format(varName))
+									for method in assignMethods:
+										print("\t\t{}".format(method))
+
 							#i = 0
 							#for path in aNodePath:
 							#	i += 1
