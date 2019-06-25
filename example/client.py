@@ -42,8 +42,11 @@ def Send():
 			sys.stdout.write("Say: ")
 			sys.stdout.flush()
 			str_send = sys.stdin.readline() # Mistake 2: Potential for unlimited bandwidth
-			# Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
 			str_send = str_send.encode('utf-8')
+			str_send = str_send[:64]
+			str_send = "test"
+			#someVar = "potato"
+			str_send = str_send
 			s.send(str_send)
 	except Exception as ex:
 		print("Socket is goofed: {}".format(ex))

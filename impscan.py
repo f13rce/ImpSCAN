@@ -101,32 +101,69 @@ def HandleNode(aNode, aNodePath):
 
 										# Check what assigns this variable
 										if (hasKeyword):
-											searchComponents = ["id", "attr"]
+											searchComponents = ["id", "attr", "slice", "s"]
 											for subNode in subNodes:
-												searchString = "Call("
-												if (searchString in subNode[:len(searchString)]):
-													#print("\tAnalyzing call node: {}".format(subNode))
-													idString = ""
-													for component in searchComponents:
-														try:
-															cutText = subNode
-															while True:
-																index = cutText.index("{}=".format(component))
-																cutText = cutText[index:]
-																foundName = cutText.split("'")[1]
+												searchStrings = ["Call", "Subscript", "Str", "Name"]
+												for searchString in searchStrings:
+													if ("{}(".format(searchString) in subNode[:len(searchString)+1]):
+														#print("\tAnalyzing call node: {}".format(subNode))
+														searchOutput = ""
+														for component in searchComponents:
+															if (component == searchComponents[0]) and (searchString == searchStrings[3]):
+																if ("ctx=Load()" in subNode):
+																	try:
+																		searchStr = "id='"
+																		foundName = subNode.split(searchStr)[1].split("'")[0]
+																		# TODO: Find length of string size
+																		searchOutput = "= {}".format(varName, foundName)
+																		assignMethods.append(searchOutput)
+																		searchOutput = ""
+																	except:
+																		pass
+															elif (component == searchComponents[0]) or (component == searchComponents[1]):
+																try:
+																	cutText = subNode
+																	while True:
+																		index = cutText.index("{}=".format(component))
+																		cutText = cutText[index:]
+																		foundName = cutText.split("'")[1]
 
-																if (component == searchComponents[0]):
-																	 idString = foundName
-																else:
-																	if (idString == ""):
-																		assignMethods.append(foundName)
-																	else:
-																		assignMethods.append("{}.{}".format(idString, foundName))
+																		if (component == searchComponents[0]):
+																			if (searchOutput != varName):
+																				searchOutput = "{}".format(foundName)
+																			break
 
-																#print("\tCall {}: {}".format(component, foundName))
-																cutText = cutText[(cutText.index(foundName) + len(foundName)):]
-														except Exception as ex:
-															pass
+																		#print("\tCall {}: {}".format(component, foundName))
+																		cutText = cutText[(cutText.index(foundName) + len(foundName)):]
+
+																		if (searchOutput != varName):
+																			if (searchOutput != ""):
+																				searchOutput += "."
+																			searchOutput += "{}".format(foundName)
+
+																except Exception as ex:
+																	if (searchOutput != "") and (searchOutput != varName):
+																		assignMethods.append("= {}".format(searchOutput))
+
+															elif component == searchComponents[2]:
+																try:
+																	searchStr = "upper=Num(n="
+																	foundName = subNode.split(searchStr)[1][:len(searchStr)].split(")")[0]
+																	searchOutput = "resize {}".format(foundName)
+																	assignMethods.append(searchOutput)
+																	searchOutput = ""
+																except:
+																	pass
+
+															elif component == searchComponents[3]:
+																try:
+																	searchStr = "s='"
+																	foundName = subNode.split(searchStr)[1][:len(searchStr) + 1].split("'")[0]
+																	searchOutput = "resize {}".format(len(foundName) + 1) # Include null terminator
+																	assignMethods.append(searchOutput)
+																	searchOutput = ""
+																except:
+																	pass
 
 								# Print results
 								if assignMethods:
