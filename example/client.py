@@ -16,7 +16,7 @@ port = 1313
 buffer_size = 4096
 reconnectTimeout = 3 # seconds
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Warning 1: AF_INET is not compatible with IPv6
 
 runApp = True
 
@@ -37,10 +37,12 @@ def Exit(socket):
 
 def Send():
 	try:
-		while True:
+		while True: # Mistake 1: This allows spamming of data
+			# While(test=NameConstant(value=True)
 			sys.stdout.write("Say: ")
 			sys.stdout.flush()
-			str_send = sys.stdin.readline()
+			str_send = sys.stdin.readline() # Mistake 2: Potential for unlimited bandwidth
+			# Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
 			str_send = str_send.encode('utf-8')
 			s.send(str_send)
 	except Exception as ex:

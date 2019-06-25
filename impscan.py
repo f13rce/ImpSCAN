@@ -1,8 +1,10 @@
-#!/bin/python3
-
 import ast
 
 functionKeywords = ["socket", "connect", "send", "recv"]
+
+### Nodes to handle:
+# Unlimited bandwidth: Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
+# 
 
 ## Funcs
 def PrintNode(aNode):
@@ -31,7 +33,22 @@ def HandleNode(aNode, aNodePath):
 					for keyword in functionKeywords:
 						if ("attr='{}'".format(keyword) in field[1]):
 							#print("##########################################################################")
-							print("Found call: {}\t{}".format(keyword, repr(field)))
+							# Find socket's variable name
+							socketVarName = field[1].split("'")[1]
+
+							print("Found call: {}.{}\t{}".format(socketVarName, keyword, repr(field)))
+
+							# Find related child nodes, such as variable names
+							childNodes = []
+							for field, value in ast.iter_fields(aNode):
+								if isinstance(value, list):
+									for item in value:
+										if isinstance(item, ast.AST):
+											childNodes.append(PrintNode(item))
+											#print("\tCHILD: {}".format(PrintNode(item)))
+								elif isinstance(value, ast.AST):
+									childNodes.append(PrintNode(value))
+									#print("\tCHILD: {}".format(PrintNode(value)))
 
 							# Find function it was called from
 							foundFunc = False
@@ -45,6 +62,18 @@ def HandleNode(aNode, aNodePath):
 									break
 							if not foundFunc:
 								print("This call is not called from inside a function")
+
+							# Analyze child nodes
+							variableNames = []
+							for childNode in childNodes:
+								if ("Name(id=" in childNode):
+									varName = childNode.split("'")[1]
+									if (varName != socketVarName):
+										print("\t{}.{} is using a variable named {}".format(socketVarName, keyword, varName))
+										variableNames.append(varName)
+
+							#for (varName in variableNames):
+								
 							#
 							#i = 0
 							#for path in aNodePath:
