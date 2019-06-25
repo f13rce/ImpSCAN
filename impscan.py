@@ -29,7 +29,7 @@ def HandleNode(aNode, aNodePath):
 			for field in fields:
 				#print(repr(field))
 				#id='variable_name'
-				#attr=function, e.g.: 
+				#attr=function, e.g.: attr='send'
 				if (field[0] == "func"):
 					for keyword in functionKeywords:
 						if ("attr='{}'".format(keyword) in field[1]):
