@@ -10,7 +10,7 @@ usesIPV6 = False
 warnings = []
 errors = []
 
-maxBytesSent = 2
+maxBytesSent = 4096
 
 ### Nodes to handle:
 # Unlimited bandwidth: Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
