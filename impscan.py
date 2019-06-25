@@ -1,7 +1,16 @@
 import ast
+from math import inf
 
 functionKeywords = ["socket", "connect", "send", "recv"]
 functionNames = []
+
+usesIPV4 = False
+usesIPV6 = False
+
+warnings = []
+errors = []
+
+maxBytesSent = 2
 
 ### Nodes to handle:
 # Unlimited bandwidth: Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
@@ -27,6 +36,7 @@ def HandleNode(aNode, aNodePath):
 
 	if (isinstance(aNode, ast.Call)):
 			for field in fields:
+				# Find socket functionality
 				#print(repr(field))
 				#id='variable_name'
 				#attr=function, e.g.: attr='send'
@@ -72,6 +82,17 @@ def HandleNode(aNode, aNodePath):
 									if (varName != socketVarName):
 										print("\t{}.{} is using a variable named {}".format(socketVarName, keyword, varName))
 										variableNames.append(varName)
+								# Find IPv4 / IPv6 connectivity
+								if (keyword == functionKeywords[0]):
+									try:
+										if "AF_INET6" in childNode:
+											global usesIPV6
+											usesIPV6 = True
+										elif "AF_INET" in childNode:
+											global usesIPV4
+											usesIPV4 = True
+									except:
+										pass
 
 							for varName in variableNames:
 								assignMethods = []
@@ -114,6 +135,11 @@ def HandleNode(aNode, aNodePath):
 																	try:
 																		searchStr = "id='"
 																		foundName = subNode.split(searchStr)[1].split("'")[0]
+
+																		# Ignore self assignments (E.g.: a = a)
+																		if (foundName == varName):
+																			continue
+
 																		# TODO: Find length of string size
 																		searchOutput = "= {}".format(varName, foundName)
 																		assignMethods.append(searchOutput)
@@ -165,11 +191,37 @@ def HandleNode(aNode, aNodePath):
 																except:
 																	pass
 
-								# Print results
+								# Find unnecessary load and print results
 								if assignMethods:
 									print("\tAssignment order of {}:".format(varName))
-									for method in assignMethods:
-										print("\t\t{}".format(method))
+									if (keyword == "send"):
+										sentBytesCount = 0
+										reason = ""
+
+									for assignMethod in assignMethods:
+										# Find unnecessary load
+										if (keyword == "send"):
+											method = assignMethod.split(" ")[0]
+											value = assignMethod.split(" ")[1]
+											if (method == "="):
+												if (value == "sys.stdin.realine"):
+													sentBytesCount = inf
+													reason = value
+												else:
+													sentBytesCount = inf # TODO find out how big this var is
+													reason = value
+											elif (method == "resize"):
+												sentBytesCount = int(value)
+
+										# Print
+										print("\t\t{}".format(assignMethod))
+
+									if (keyword == "send"):
+										global errors
+										if (sentBytesCount == inf):	
+											errors.append("Socket {} could be sending infinite amount of bytes because of: {}".format(socketVarName, reason))
+										elif (sentBytesCount > maxBytesSent):
+											errors.append("Socket {} is sending more than {} bytes in a resize, which could be bad for performance.".format(socketVarName, maxBytesSent))
 
 							#i = 0
 							#for path in aNodePath:
@@ -192,6 +244,7 @@ def IterateThroughNodes(aNode, aNodePath):
 			IterateThroughNodes(value, aNodePath)
 
 ## "Main"
+print("### Debug ###")
 src = ""
 with open("example/client.py", "r") as file:
 	src = file.read()
@@ -203,3 +256,31 @@ nodePath.append(startNode)
 
 #HandleNode(startNode, nodePath)
 IterateThroughNodes(startNode, nodePath)
+
+# Finalize
+if (usesIPV4) and (usesIPV6):
+	print("Sockets are implemented for both IPv4 and IPv6.")
+else:
+	if not usesIPV4:
+		warnings.append("Socket connectivity is not configured for IPv4 connections")
+	if not usesIPV6:
+		warnings.append("Socket connectivity is not configured for IPv6 connections")
+
+# Print output
+
+print("") # Newline
+print("### Report ###")
+print("Errors:\t\t{}".format(len(errors)))
+print("Warnings:\t{}".format(len(warnings)))
+
+# Print errors
+if errors:
+	print("\nErrors:")
+	for error in errors:
+		print("\t{}".format(error))
+
+# Print warnings
+if warnings:
+	print("\nWarnings:")
+	for warning in warnings:
+		print("\t{}".format(warning))

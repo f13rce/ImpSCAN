@@ -16,7 +16,7 @@ port = 1313
 buffer_size = 4096
 reconnectTimeout = 3 # seconds
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Warning 1: AF_INET is not compatible with IPv6
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Warning 1: No IPv6 implementation
 
 runApp = True
 
@@ -37,16 +37,17 @@ def Exit(socket):
 
 def Send():
 	try:
-		while True: # Mistake 1: This allows spamming of data
+		while True: # Warning 2: This allows spamming of data
 			# While(test=NameConstant(value=True)
 			sys.stdout.write("Say: ")
 			sys.stdout.flush()
-			str_send = sys.stdin.readline() # Mistake 2: Potential for unlimited bandwidth
+			str_send = sys.stdin.readline() # Mistake 1: Potential for unlimited bandwidth
 			str_send = str_send.encode('utf-8')
-			str_send = str_send[:64]
-			str_send = "test"
+			#str_send = str_send[:64] # This must fix mistake #1
+			#str_send = "test" # This also fixes mistake #1
 			#someVar = "potato"
-			str_send = str_send
+			#str_send = someVar # This could fix mistake #1, depending on the size of this string
+			str_send = str_send # This should be ignored
 			s.send(str_send)
 	except Exception as ex:
 		print("Socket is goofed: {}".format(ex))
