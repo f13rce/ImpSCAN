@@ -1,5 +1,10 @@
 import ast
 from math import inf
+import sys
+
+import os
+from os import listdir
+from os.path import isfile, join
 
 functionKeywords = ["socket", "connect", "send", "recv"]
 functionNames = []
@@ -11,6 +16,7 @@ warnings = []
 errors = []
 
 maxBytesSent = 4096
+writeNodesToFile = True
 
 ### Nodes to handle:
 # Unlimited bandwidth: Assign(targets=[<_ast.Name object at 0x0000022A5D7F4710>], value=Call(func=Attribute(value=Attribute(value=Name(id='sys', ctx=Load()), attr='stdin', ctx=Load()), attr='readline', ctx=Load()), args=[], keywords=[]))
@@ -30,7 +36,11 @@ def PrintNode(aNode):
 		return repr(aNode)
 
 def HandleNode(aNode, aNodePath):
-	PrintNode(aNode)
+	name = PrintNode(aNode)
+
+	if writeNodesToFile:
+		with open("out_{}.txt".format(sys.argv[1].replace('/', '_')), "a") as f:
+			f.write("{}\n".format(name))
 
 	fields = [(name, PrintNode(val)) for name, val in ast.iter_fields(aNode) if name not in ('left', 'right')]	
 
@@ -246,41 +256,76 @@ def IterateThroughNodes(aNode, aNodePath):
 ## "Main"
 print("### Debug ###")
 src = ""
-with open("example/client.py", "r") as file:
-	src = file.read()
 
-nodePath = []
+if len(sys.argv) >= 2:
+	imports = []
 
-startNode = ast.parse(src)
-nodePath.append(startNode)
+	with open(sys.argv[1], "r") as file:
+		src = file.read()
+		src += "\n"
 
-#HandleNode(startNode, nodePath)
-IterateThroughNodes(startNode, nodePath)
+	#Import(names=[<_ast.alias object at 0x0000020C212CFB70>])
+	#alias(name='netlib', asname=None)
+	lines = src.split("\n")
+	for line in lines:
+		print("line: {}".format(line))
+		if ("import " in line):
+			imports.append(line.split(" ")[1])
 
-# Finalize
-if (usesIPV4) and (usesIPV6):
-	print("Sockets are implemented for both IPv4 and IPv6.")
+	if imports:
+		currentDir = "{}/".format(os.path.dirname(os.path.abspath(__file__)))
+		currentDir = currentDir.replace("\\", "/")
+		sys.argv[1] = sys.argv[1].replace("\\", "/")
+		path = "{}/".format('/'.join(sys.argv[1].split('/')[0:-1]))
+
+		print("Path: {}\nCurrentDir: {}".format(path, currentDir))
+		if not path[1] == ":" and not path[0] == "/":
+			path = currentDir + path
+
+		print("Looking for files ({}) in {}:".format(repr(imports), path))
+		files = [f for f in listdir(path) if isfile(join(path, f))]
+		for file in files:
+			for requiredImport in imports:
+				if (file == "{}.py".format(requiredImport)):
+					print("Found an import named {} in the path {}!".format(requiredImport, path))
+					with open("{}{}.py".format(path, requiredImport), "r") as file:
+						src += file.read()
+						src += "\n"
+
+	nodePath = []
+
+	startNode = ast.parse(src)
+	nodePath.append(startNode)
+
+	#HandleNode(startNode, nodePath)
+	IterateThroughNodes(startNode, nodePath)
+
+	# Finalize
+	if (usesIPV4) and (usesIPV6):
+		print("Sockets are implemented for both IPv4 and IPv6.")
+	else:
+		if not usesIPV4:
+			warnings.append("Socket connectivity is not configured for IPv4 connections")
+		if not usesIPV6:
+			warnings.append("Socket connectivity is not configured for IPv6 connections")
+
+	# Print output
+
+	print("") # Newline
+	print("### Report ###")
+	print("Errors:\t\t{}".format(len(errors)))
+	print("Warnings:\t{}".format(len(warnings)))
+
+	# Print errors
+	if errors:
+		print("\nErrors:")
+		for error in errors:
+			print("\t{}".format(error))
+
+	# Print warnings
+	if warnings:
+		print("\nWarnings:")
+		for warning in warnings:
+			print("\t{}".format(warning))
 else:
-	if not usesIPV4:
-		warnings.append("Socket connectivity is not configured for IPv4 connections")
-	if not usesIPV6:
-		warnings.append("Socket connectivity is not configured for IPv6 connections")
-
-# Print output
-
-print("") # Newline
-print("### Report ###")
-print("Errors:\t\t{}".format(len(errors)))
-print("Warnings:\t{}".format(len(warnings)))
-
-# Print errors
-if errors:
-	print("\nErrors:")
-	for error in errors:
-		print("\t{}".format(error))
-
-# Print warnings
-if warnings:
-	print("\nWarnings:")
-	for warning in warnings:
-		print("\t{}".format(warning))
+	print("Please specify a file to analyze.\n\tE.g.: python3 impscan.py example/client.py")

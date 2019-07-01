@@ -1,0 +1,151 @@
+E:\Projects\GitHub\ImpSCAN>py impscan.py example/netlib/netlibclient.py
+### Debug ###
+line: import sys
+line: import netlib
+line:
+line: def OnReceive(aMessage):
+line:   sys.stdout.write("\r{}".format(aMessage)) # Already includes a \n
+line:   sys.stdout.write("Say: ")
+line:   sys.stdout.flush()
+line:
+line: netlib.Initialize(True, OnReceive)
+line:
+line: try:
+line:   while True:
+line:           sys.stdout.write("Say: ")
+line:           sys.stdout.flush()
+line:           str_send = sys.stdin.readline() # Mistake 1: Potential for unlimited bandwidth
+line:           netlib.Send(str_send)
+line: except:
+line:   netlib.Exit()
+line:
+Path: example/netlib/
+CurrentDir: E:/Projects/GitHub/ImpSCAN/
+Looking for files (['sys', 'netlib']) in E:/Projects/GitHub/ImpSCAN/example/netlib/:
+Found an import named netlib in the path E:/Projects/GitHub/ImpSCAN/example/netlib/!
+import sys
+import netlib
+
+def OnReceive(aMessage):
+        sys.stdout.write("\r{}".format(aMessage)) # Already includes a \n
+        sys.stdout.write("Say: ")
+        sys.stdout.flush()
+
+netlib.Initialize(True, OnReceive)
+
+try:
+        while True:
+                sys.stdout.write("Say: ")
+                sys.stdout.flush()
+                str_send = sys.stdin.readline() # Mistake 1: Potential for unlimited bandwidth
+                netlib.Send(str_send)
+except:
+        netlib.Exit()
+'''
+        Python3 Network Library Example
+'''
+
+import socket
+import sys
+from threading import Thread, Lock
+import time
+import os
+
+pid = os.getpid()
+
+# Globals
+ip = "127.0.0.1"
+port = 1313
+buffer_size = 4096
+reconnectTimeout = 3 # seconds
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Warning 1: No IPv6 implementation
+
+def Initialize(aIsClient, aRecvCallbackFunc):
+        if (aIsClient):
+                # Try to connect
+                while not Connect():
+                        print("Retrying in {} seconds...".format(reconnectTimeout))
+                        time.sleep(reconnectTimeout)
+
+        # Set up receive and send threads
+        try:
+                rcv = Thread(target=Receive, args=(aRecvCallbackFunc,))
+                rcv.start()
+
+                netlibMain = Thread(target=NetlibMain)
+                netlibMain.start()
+
+        # Stop application on exception
+        except:
+                Exit(s)
+
+def NetlibMain():
+        while s != None:
+                # Keep application alive
+                time.sleep(1)
+
+# Funcs
+def Connect():
+        try:
+                s.connect((ip, port))
+                return True
+        except Exception as ex:
+                print("Failed to connect. {}\n".format(ex))
+                return False
+
+def Exit(aSocket = None):
+        print("\nGoodbye.")
+        if aSocket != None:
+                aSocket.close()
+        global s
+        s.close()
+        sys.exit()
+        os.system("kill -9 {}".format(pid))
+
+def Send(aMessage):
+        try:
+                        str_send = aMessage.encode('utf-8')
+                        #str_send = str_send[:64] # This must fix mistake #1
+                        #str_send = "test" # This also fixes mistake #1
+                        #someVar = "potato"
+                        s.send(str_send)
+        except Exception as ex:
+                print("Socket is goofed: {}".format(ex))
+                Exit(s)
+
+def Receive(aRecvCallbackFunc):
+        while True:
+                if (s != None):
+                        str_recv = s.recv(buffer_size)
+                        if (len(str_recv) > 0):
+                                aRecvCallbackFunc(str_recv.decode('utf-8'))
+                        else:
+                                break
+                else:
+                        break
+        Exit(s)
+
+Found call: socket.socket       ('func', "Attribute(value=Name(id='socket', ctx=Load()), attr='socket', ctx=Load())")
+It's coming from function named OnReceive
+Found call: s.connect   ('func', "Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load())")
+It's coming from function named Connect
+Found call: s.send      ('func', "Attribute(value=Name(id='s', ctx=Load()), attr='send', ctx=Load())")
+It's coming from function named Send
+        s.send is using a variable named str_send
+        Assignment order of str_send:
+                = sys.stdin.readline
+                = aMessage.encode
+Found call: s.recv      ('func', "Attribute(value=Name(id='s', ctx=Load()), attr='recv', ctx=Load())")
+It's coming from function named Receive
+        s.recv is using a variable named buffer_size
+
+### Report ###
+Errors:         1
+Warnings:       1
+
+Errors:
+        Socket s could be sending infinite amount of bytes because of: aMessage.encode
+
+Warnings:
+        Socket connectivity is not configured for IPv6 connections
