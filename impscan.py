@@ -264,11 +264,11 @@ if len(sys.argv) >= 2:
 		src = file.read()
 		src += "\n"
 
-	#Import(names=[<_ast.alias object at 0x0000020C212CFB70>])
-	#alias(name='netlib', asname=None)
+	# TODO: Make this clean using the alias below from the AST:
+	#	Import(names=[<_ast.alias object at 0x0000020C212CFB70>])
+	#	alias(name='netlib', asname=None)
 	lines = src.split("\n")
 	for line in lines:
-		print("line: {}".format(line))
 		if ("import " in line):
 			imports.append(line.split(" ")[1])
 
@@ -278,11 +278,10 @@ if len(sys.argv) >= 2:
 		sys.argv[1] = sys.argv[1].replace("\\", "/")
 		path = "{}/".format('/'.join(sys.argv[1].split('/')[0:-1]))
 
-		print("Path: {}\nCurrentDir: {}".format(path, currentDir))
 		if not path[1] == ":" and not path[0] == "/":
 			path = currentDir + path
 
-		print("Looking for files ({}) in {}:".format(repr(imports), path))
+		#print("Looking for files ({}) in {}:".format(repr(imports), path))
 		files = [f for f in listdir(path) if isfile(join(path, f))]
 		for file in files:
 			for requiredImport in imports:
