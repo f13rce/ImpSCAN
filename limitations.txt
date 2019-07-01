@@ -1,0 +1,39 @@
+#1: Threading can cause unexpected behaviour, preventing >static< code analysis
+	E.g.:
+		stringToSend = ""
+		Thread 1: stringToSend = "Hello World!"
+		Thread 2: stringToSend += "!"
+
+		How often is "!" being added? You can only check this on runtime.
+
+	How will you track socket dtors when every socket is threaded?
+
+#2: Multi-file projects are difficult to spot using AST
+	E.g.:
+		# Import using existing library
+		Import(names=[<_ast.alias object at 0x0000020C212CFAC8>])
+		alias(name='sys', asname=None)
+
+		# Import using file in the same directory
+		Import(names=[<_ast.alias object at 0x0000020C212CFB70>])
+		alias(name='netlib', asname=None)
+
+		Have to use heuristics and check for "netlib.py" in the same directory
+		If (in this case) there is a "sys.py" in the same directory,
+			how can you make sure the import is from the existing library?
+
+#3: Rules are hard to implement
+	For every implementation rule, you usually need the entire context (read: node tree),
+		as well as implementing every scenario possible that could go wrong.
+
+	E.g.:
+		When you use a variable as buffer in socket.send(), a rule that the variable cannot
+			be larger than X amount of bytes must be implemented.
+		This means that the variable must be checked by findings its latest
+			Assignment() node in the AST, which could be complicated/impossible because of #1.
+		To find the latest Assignment() node, you need to follow down the entire node tree
+			up until the socket.send() function.
+		This could be redundant as variable names could change when used as an argument in a function.
+		These events could lead the re-analyzing the entire node tree multiple times, which could
+			lead to enormous amounts of time lost in purely analyzing what the context of everything is.
+		If so, the scenario will most likely scale not well with large codebases with millions of nodes.

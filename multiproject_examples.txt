@@ -1,0 +1,63 @@
+### Finding wrong IP/Port settings, or pop up a warning of not using DNS to connect
+# Client
+Assign(targets=[<_ast.Name object at 0x7fb03dbfc978>], value=Str(s='127.0.0.1'))
+Name(id='ip', ctx=Store())
+    Store()
+Str(s='127.0.0.1')
+Assign(targets=[<_ast.Name object at 0x7fb03dbfca20>], value=Num(n=1313))
+Name(id='port', ctx=Store())
+    Store()
+Num(n=1313)
+
+FunctionDef(name='Connect', args=arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]), body=[<_ast.Try object at 0x7fb03dbfcf60>], decorator_list=[], returns=None)
+arguments(args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[])
+Try(body=[<_ast.Expr object at 0x7fb03dbfcf98>, <_ast.Return object at 0x7fb03dbfa160>], handlers=[<_ast.ExceptHandler object at 0x7fb03dbfa1d0>], orelse=[], finalbody=[])
+Expr(value=Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load()), args=[<_ast.Tuple object at 0x7fb03dbfa0b8>], keywords=[]))
+Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load()), args=[<_ast.Tuple object at 0x7fb03dbfa0b8>], keywords=[])
+    Attribute(value=Name(id='s', ctx=Load()), attr='connect', ctx=Load())
+    Name(id='s', ctx=Load())
+        Load()
+    Load()
+    Tuple(elts=[<_ast.Name object at 0x7fb03dbfa0f0>, <_ast.Name object at 0x7fb03dbfa128>], ctx=Load())
+    Name(id='ip', ctx=Load())
+        Load()
+    Name(id='port', ctx=Load())
+        Load()
+    Load()
+
+# Server
+Assign(targets=[<_ast.Name object at 0x000002150A8F48D0>], value=Str(s='127.0.0.1'))
+	Name(id='ip', ctx=Store())
+		Store()
+	Str(s='127.0.0.1')
+Assign(targets=[<_ast.Name object at 0x000002150A8F4978>], value=Num(n=1313))
+	Name(id='port', ctx=Store())
+		Store()
+	Num(n=1313)
+
+Expr(value=Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='bind', ctx=Load()), args=[<_ast.Tuple object at 0x000002150A8F4B70>], keywords=[]))
+Call(func=Attribute(value=Name(id='s', ctx=Load()), attr='bind', ctx=Load()), args=[<_ast.Tuple object at 0x000002150A8F4B70>], keywords=[])
+	Attribute(value=Name(id='s', ctx=Load()), attr='bind', ctx=Load())
+		Name(id='s', ctx=Load())
+			Load()
+		Load()
+	Tuple(elts=[<_ast.Name object at 0x000002150A8F4BA8>, <_ast.Name object at 0x000002150A8F4BE0>], ctx=Load())
+		Name(id='ip', ctx=Load())
+			Load()
+		Name(id='port', ctx=Load())
+			Load()
+	Load()
+###
+
+### Non-equal buffer sizes
+# Client
+Assign(targets=[<_ast.Name object at 0x00000159BB63A4E0>], value=Num(n=4096))
+Name(id='buffer_size', ctx=Store())
+Store()
+Num(n=4096)
+
+# Server
+Assign(targets=[<_ast.Name object at 0x000002150A8F4A20>], value=Num(n=4096))
+Name(id='buffer_size', ctx=Store())
+Store()
+Num(n=2048)
